@@ -298,7 +298,7 @@ Generated on: ${new Date().toLocaleString()}
     
     ctx.fillStyle = '#9333ea'
     ctx.font = '16px -apple-system, BlinkMacSystemFont, sans-serif'
-    ctx.fillText('Built with 💜 using WalletConnect', 60, 580)
+    ctx.fillText('Built by Winszn', 60, 580)
     
     canvas.toBlob((blob) => {
       const url = URL.createObjectURL(blob)
@@ -652,7 +652,6 @@ Generated on: ${new Date().toLocaleString()}
 
       <footer className="border-t border-white/10 bg-black/20 backdrop-blur-lg mt-12">
         <div className="max-w-6xl mx-auto px-4 py-6 text-center text-purple-300 text-sm">
-          Built with 💜 using WalletConnect • Showcase your Web3 journey
         </div>
       </footer>
     </div>
