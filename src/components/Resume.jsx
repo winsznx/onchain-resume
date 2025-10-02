@@ -14,6 +14,7 @@ export default function Resume() {
   
   const [loading, setLoading] = useState(false)
   const [profileData, setProfileData] = useState(null)
+  const [basename, setBasename] = useState('')
   const [socialLinks, setSocialLinks] = useState({
     github: '',
     farcaster: '',
@@ -24,8 +25,22 @@ export default function Resume() {
   useEffect(() => {
     if (address) {
       fetchProfileData(address)
+      fetchBasename(address)
     }
   }, [address])
+
+  const fetchBasename = async (address) => {
+    try {
+      // Basename API endpoint
+      const response = await fetch(`https://api.basename.app/v1/name/${address}`)
+      const data = await response.json()
+      if (data.name) {
+        setBasename(data.name)
+      }
+    } catch (error) {
+      console.log('No Basename found for this address')
+    }
+  }
 
   const fetchProfileData = async (walletAddress) => {
     setLoading(true)
@@ -50,18 +65,18 @@ export default function Resume() {
     const ETHERSCAN_API_KEY = import.meta.env.VITE_ETHERSCAN_API_KEY
     
     const networks = [
-      { name: 'Ethereum Mainnet', api: 'https://api.etherscan.io/api', key: ETHERSCAN_API_KEY },
-      { name: 'Sepolia Testnet', api: 'https://api-sepolia.etherscan.io/api', key: ETHERSCAN_API_KEY },
-      { name: 'Base', api: 'https://api.basescan.org/api', key: ETHERSCAN_API_KEY },
-      { name: 'Optimism', api: 'https://api-optimistic.etherscan.io/api', key: ETHERSCAN_API_KEY },
-      { name: 'Arbitrum', api: 'https://api.arbiscan.io/api', key: ETHERSCAN_API_KEY },
-      { name: 'Polygon', api: 'https://api.polygonscan.com/api', key: ETHERSCAN_API_KEY }
+      { name: 'Ethereum', type: 'Mainnet', api: 'https://api.etherscan.io/api', key: ETHERSCAN_API_KEY, explorer: 'https://etherscan.io' },
+      { name: 'Sepolia', type: 'Testnet', api: 'https://api-sepolia.etherscan.io/api', key: ETHERSCAN_API_KEY, explorer: 'https://sepolia.etherscan.io' },
+      { name: 'Base', type: 'Mainnet', api: 'https://api.basescan.org/api', key: ETHERSCAN_API_KEY, explorer: 'https://basescan.org' },
+      { name: 'Base Sepolia', type: 'Testnet', api: 'https://api-sepolia.basescan.org/api', key: ETHERSCAN_API_KEY, explorer: 'https://sepolia.basescan.org' },
+      { name: 'Optimism', type: 'Mainnet', api: 'https://api-optimistic.etherscan.io/api', key: ETHERSCAN_API_KEY, explorer: 'https://optimistic.etherscan.io' },
+      { name: 'Arbitrum', type: 'Mainnet', api: 'https://api.arbiscan.io/api', key: ETHERSCAN_API_KEY, explorer: 'https://arbiscan.io' },
+      { name: 'Polygon', type: 'Mainnet', api: 'https://api.polygonscan.com/api', key: ETHERSCAN_API_KEY, explorer: 'https://polygonscan.com' }
     ]
     
     let allTransactions = []
-    let activeChains = []
+    let chainDetails = []
     let totalGasSpent = 0
-    let contractDeployments = 0
     let firstTxDate = null
     
     const results = await Promise.all(
@@ -73,9 +88,16 @@ export default function Resume() {
           const data = await response.json()
           
           if (data.status === '1' && data.result && data.result.length > 0) {
+            const transactions = data.result
+            const deploys = transactions.filter(tx => tx.to === '')
+            
             return {
-              network: network.name,
-              transactions: data.result
+              name: network.name,
+              type: network.type,
+              explorer: network.explorer,
+              transactions: transactions,
+              txCount: transactions.length,
+              contractsDeployed: deploys.length
             }
           }
           return null
@@ -86,13 +108,20 @@ export default function Resume() {
       })
     )
     
+    let totalContractDeployments = 0
+    
     results.forEach(result => {
       if (result && result.transactions.length > 0) {
-        activeChains.push(result.network)
-        allTransactions.push(...result.transactions)
+        chainDetails.push({
+          name: result.name,
+          type: result.type,
+          explorer: result.explorer,
+          txCount: result.txCount,
+          contracts: result.contractsDeployed
+        })
         
-        const deploys = result.transactions.filter(tx => tx.to === '')
-        contractDeployments += deploys.length
+        allTransactions.push(...result.transactions)
+        totalContractDeployments += result.contractsDeployed
         
         const chainGas = result.transactions.reduce((sum, tx) => {
           return sum + (parseInt(tx.gasUsed) * parseInt(tx.gasPrice))
@@ -114,7 +143,8 @@ export default function Resume() {
         gasSpent: '0 ETH',
         contractsDeployed: 0,
         firstTransaction: 'N/A',
-        chainsActive: []
+        chainDetails: [],
+        explorerUrl: null
       }
     }
     
@@ -131,9 +161,10 @@ export default function Resume() {
       totalTransactions: allTransactions.length,
       walletAge: walletAgeStr,
       gasSpent: `${gasInEth} ETH`,
-      contractsDeployed: contractDeployments,
+      contractsDeployed: totalContractDeployments,
       firstTransaction: firstTxDate.toLocaleDateString(),
-      chainsActive: activeChains
+      chainDetails: chainDetails,
+      explorerUrl: chainDetails[0]?.explorer
     }
   }
 
@@ -298,7 +329,7 @@ Generated on: ${new Date().toLocaleString()}
     
     ctx.fillStyle = '#9333ea'
     ctx.font = '16px -apple-system, BlinkMacSystemFont, sans-serif'
-    ctx.fillText('Built by Winszn', 60, 580)
+    ctx.fillText('Built with 💜 using WalletConnect', 60, 580)
     
     canvas.toBlob((blob) => {
       const url = URL.createObjectURL(blob)
@@ -371,7 +402,7 @@ Generated on: ${new Date().toLocaleString()}
           </div>
 
           <p className="text-sm text-purple-300">
-            Powered by WalletConnect • Built for Web3 Builders
+            @winsznx
           </p>
         </div>
       </div>
@@ -407,7 +438,10 @@ Generated on: ${new Date().toLocaleString()}
             </div>
             <div className="flex-1 space-y-3">
               <div>
-                <h2 className="text-3xl font-bold">{ensName || 'Web3 Builder'}</h2>
+                <h2 className="text-3xl font-bold">{basename || ensName || 'Web3 Builder'}</h2>
+                {basename && ensName && (
+                  <p className="text-sm text-purple-400">Also known as: {ensName}</p>
+                )}
                 <p className="text-purple-300">
                   Builder since {profileData?.walletAge || 'recently'}
                 </p>
@@ -503,12 +537,20 @@ Generated on: ${new Date().toLocaleString()}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-            <div className="text-3xl font-bold text-purple-400">
+          <a 
+            href={profileData?.explorerUrl ? `${profileData.explorerUrl}/address/${address}` : '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-purple-400 transition-all cursor-pointer group"
+          >
+            <div className="text-3xl font-bold text-purple-400 group-hover:scale-110 transition-transform">
               {profileData?.totalTransactions?.toLocaleString() || '0'}
             </div>
             <div className="text-sm text-purple-300 mt-1">Total Transactions</div>
-          </div>
+            <div className="text-xs text-purple-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              Click to view on explorer →
+            </div>
+          </a>
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
             <div className="text-3xl font-bold text-pink-400">
               {profileData?.contractsDeployed || '0'}
@@ -521,12 +563,20 @@ Generated on: ${new Date().toLocaleString()}
             </div>
             <div className="text-sm text-purple-300 mt-1">NFTs Collected</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-            <div className="text-3xl font-bold text-green-400">
+          <a 
+            href={profileData?.explorerUrl ? `${profileData.explorerUrl}/address/${address}#internaltx` : '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-green-400 transition-all cursor-pointer group"
+          >
+            <div className="text-3xl font-bold text-green-400 group-hover:scale-110 transition-transform">
               {profileData?.gasSpent || '0 ETH'}
             </div>
             <div className="text-sm text-purple-300 mt-1">Gas Spent</div>
-          </div>
+            <div className="text-xs text-purple-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              Click to view transactions →
+            </div>
+          </a>
         </div>
 
         {profileData?.chainsActive && profileData.chainsActive.length > 0 && (
@@ -652,6 +702,7 @@ Generated on: ${new Date().toLocaleString()}
 
       <footer className="border-t border-white/10 bg-black/20 backdrop-blur-lg mt-12">
         <div className="max-w-6xl mx-auto px-4 py-6 text-center text-purple-300 text-sm">
+          Showcase your Web3 journey 
         </div>
       </footer>
     </div>
