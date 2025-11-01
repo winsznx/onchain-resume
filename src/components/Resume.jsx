@@ -38,6 +38,7 @@ export default function Resume() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
+            entry.target.classList.add('visible')
             setSectionsVisible((prev) => ({ ...prev, [entry.target.id]: true }))
           }
         })
@@ -367,12 +368,44 @@ Generated on: ${new Date().toLocaleString()}
 
   if (loading && isConnected) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 text-purple-400 animate-spin mx-auto" />
-          <p className="text-purple-200 text-xl">Loading your on-chain resume...</p>
-          <p className="text-purple-400 text-sm">Scanning multiple blockchains...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+        <header className="border-b border-white/10 bg-black/20 backdrop-blur-lg">
+          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 className="text-2xl font-bold">On-Chain Resume</h1>
+            <div className="bg-white/10 px-4 py-2 rounded-lg border border-white/20 animate-pulse h-10 w-40"></div>
+          </div>
+        </header>
+
+        <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+          {/* Profile Skeleton */}
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 animate-pulse">
+            <div className="flex items-start gap-6">
+              <div className="w-24 h-24 bg-white/10 rounded-2xl"></div>
+              <div className="flex-1 space-y-3">
+                <div className="h-8 bg-white/10 rounded w-1/3"></div>
+                <div className="h-4 bg-white/10 rounded w-1/4"></div>
+                <div className="h-4 bg-white/10 rounded w-1/5"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 animate-pulse">
+                <div className="h-10 bg-white/10 rounded w-20 mb-2"></div>
+                <div className="h-4 bg-white/10 rounded w-24"></div>
+              </div>
+            ))}
+          </div>
+
+          {/* Loading Message */}
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-12 border border-white/20 text-center">
+            <Loader2 className="w-12 h-12 text-purple-400 animate-spin mx-auto mb-4" />
+            <p className="text-purple-200 text-xl mb-2">Loading your on-chain resume...</p>
+            <p className="text-purple-400 text-sm">Scanning multiple blockchains...</p>
+          </div>
+        </main>
       </div>
     )
   }
@@ -557,6 +590,60 @@ Generated on: ${new Date().toLocaleString()}
             </div>
           </div>
         </div>
+
+        {/* Activity Timeline */}
+        {profileData?.firstTransaction && (
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20" id="timeline" data-animate>
+            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <Calendar className="w-6 h-6 text-purple-400" />
+              Wallet Activity Timeline
+            </h3>
+            <div className="relative">
+              <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-purple-500 via-pink-500 to-blue-500"></div>
+              <div className="space-y-6 pl-12">
+                <div className="relative group">
+                  <div className="absolute -left-[34px] w-3 h-3 bg-purple-500 rounded-full border-4 border-slate-900 group-hover:scale-150 transition-transform"></div>
+                  <div className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-purple-500/50 transition-all">
+                    <div className="text-sm text-purple-400">First Transaction</div>
+                    <div className="text-lg font-semibold text-white">{profileData.firstTransaction}</div>
+                    <div className="text-sm text-purple-300 mt-1">Started Web3 journey</div>
+                  </div>
+                </div>
+
+                {profileData.contractsDeployed > 0 && (
+                  <div className="relative group">
+                    <div className="absolute -left-[34px] w-3 h-3 bg-pink-500 rounded-full border-4 border-slate-900 group-hover:scale-150 transition-transform"></div>
+                    <div className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-pink-500/50 transition-all">
+                      <div className="text-sm text-pink-400">Contract Deployment</div>
+                      <div className="text-lg font-semibold text-white">{profileData.contractsDeployed} Contract{profileData.contractsDeployed > 1 ? 's' : ''}</div>
+                      <div className="text-sm text-purple-300 mt-1">Deployed smart contracts</div>
+                    </div>
+                  </div>
+                )}
+
+                {profileData.totalNFTs > 0 && (
+                  <div className="relative group">
+                    <div className="absolute -left-[34px] w-3 h-3 bg-blue-500 rounded-full border-4 border-slate-900 group-hover:scale-150 transition-transform"></div>
+                    <div className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-blue-500/50 transition-all">
+                      <div className="text-sm text-blue-400">NFT Collection</div>
+                      <div className="text-lg font-semibold text-white">{profileData.totalNFTs} NFT{profileData.totalNFTs > 1 ? 's' : ''}</div>
+                      <div className="text-sm text-purple-300 mt-1">Collected digital assets</div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="relative group">
+                  <div className="absolute -left-[34px] w-3 h-3 bg-green-500 rounded-full border-4 border-slate-900 group-hover:scale-150 transition-transform animate-pulse"></div>
+                  <div className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-green-500/50 transition-all">
+                    <div className="text-sm text-green-400">Current Status</div>
+                    <div className="text-lg font-semibold text-white">Active Builder</div>
+                    <div className="text-sm text-purple-300 mt-1">{profileData.totalTransactions.toLocaleString()} total transactions</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4" id="stats" data-animate>
           <a
