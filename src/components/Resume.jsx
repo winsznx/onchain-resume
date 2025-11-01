@@ -1,17 +1,17 @@
 // src/components/Resume.jsx - COMPLETE FIXED VERSION
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAccount, useEnsName } from 'wagmi'
 import { useAppKit } from '@reown/appkit/react'
-import { 
-  Wallet, Github, MessageCircle, Award, 
-  Code, TrendingUp, Calendar, ExternalLink, Loader2 
+import {
+  Wallet, Github, MessageCircle, Award,
+  Code, TrendingUp, Calendar, ExternalLink, Loader2, ChevronDown, ChevronUp, X
 } from 'lucide-react'
 
 export default function Resume() {
   const { address, isConnected } = useAccount()
   const { data: ensName } = useEnsName({ address })
   const { open } = useAppKit()
-  
+
   const [loading, setLoading] = useState(false)
   const [profileData, setProfileData] = useState(null)
   const [basename, setBasename] = useState('')
@@ -21,6 +21,9 @@ export default function Resume() {
     website: ''
   })
   const [editMode, setEditMode] = useState(false)
+  const [expandedChain, setExpandedChain] = useState(null)
+  const [selectedNFT, setSelectedNFT] = useState(null)
+  const [sectionsVisible, setSectionsVisible] = useState({})
 
   useEffect(() => {
     if (address) {
@@ -28,6 +31,25 @@ export default function Resume() {
       fetchBasename(address)
     }
   }, [address])
+
+  // Intersection Observer for scroll animations
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setSectionsVisible((prev) => ({ ...prev, [entry.target.id]: true }))
+          }
+        })
+      },
+      { threshold: 0.1 }
+    )
+
+    const sections = document.querySelectorAll('[data-animate]')
+    sections.forEach((section) => observer.observe(section))
+
+    return () => observer.disconnect()
+  }, [profileData])
 
   const fetchBasename = async (address) => {
     try {
@@ -536,82 +558,131 @@ Generated on: ${new Date().toLocaleString()}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <a 
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4" id="stats" data-animate>
+          <a
             href={profileData?.explorerUrl ? `${profileData.explorerUrl}/address/${address}` : '#'}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-purple-400 transition-all cursor-pointer group"
+            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 cursor-pointer group hover:-translate-y-2"
           >
-            <div className="text-3xl font-bold text-purple-400 group-hover:scale-110 transition-transform">
+            <div className="text-3xl font-bold text-purple-400 group-hover:scale-110 transition-transform duration-300">
               {profileData?.totalTransactions?.toLocaleString() || '0'}
             </div>
             <div className="text-sm text-purple-300 mt-1">Total Transactions</div>
-            <div className="text-xs text-purple-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="text-xs text-purple-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               Click to view on explorer →
             </div>
           </a>
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-            <div className="text-3xl font-bold text-pink-400">
+          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-pink-400 hover:shadow-lg hover:shadow-pink-500/50 transition-all duration-300 hover:-translate-y-2 group">
+            <div className="text-3xl font-bold text-pink-400 group-hover:scale-110 transition-transform duration-300">
               {profileData?.contractsDeployed || '0'}
             </div>
             <div className="text-sm text-purple-300 mt-1">Contracts Deployed</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-            <div className="text-3xl font-bold text-blue-400">
+          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-blue-400 hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 hover:-translate-y-2 group">
+            <div className="text-3xl font-bold text-blue-400 group-hover:scale-110 transition-transform duration-300">
               {profileData?.totalNFTs || '0'}
             </div>
             <div className="text-sm text-purple-300 mt-1">NFTs Collected</div>
           </div>
-          <a 
+          <a
             href={profileData?.explorerUrl ? `${profileData.explorerUrl}/address/${address}#internaltx` : '#'}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-green-400 transition-all cursor-pointer group"
+            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-green-400 hover:shadow-lg hover:shadow-green-500/50 transition-all duration-300 cursor-pointer group hover:-translate-y-2"
           >
-            <div className="text-3xl font-bold text-green-400 group-hover:scale-110 transition-transform">
+            <div className="text-3xl font-bold text-green-400 group-hover:scale-110 transition-transform duration-300">
               {profileData?.gasSpent || '0 ETH'}
             </div>
             <div className="text-sm text-purple-300 mt-1">Gas Spent</div>
-            <div className="text-xs text-purple-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="text-xs text-purple-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               Click to view transactions →
             </div>
           </a>
         </div>
 
-        {profileData?.chainsActive && profileData.chainsActive.length > 0 && (
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+        {profileData?.chainDetails && profileData.chainDetails.length > 0 && (
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20" id="chains" data-animate>
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
               <TrendingUp className="w-6 h-6 text-purple-400" />
-              Active Chains ({profileData.chainsActive.length})
+              Active Chains ({profileData.chainDetails.length})
             </h3>
-            <div className="flex flex-wrap gap-3">
-              {profileData.chainsActive.map((chain) => (
-                <span key={chain} className="bg-purple-500/20 border border-purple-500/30 px-4 py-2 rounded-lg text-purple-200">
-                  {chain}
-                </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {profileData.chainDetails.map((chain, index) => (
+                <div
+                  key={index}
+                  className="bg-white/5 rounded-xl border border-white/10 overflow-hidden hover:border-purple-500/50 transition-all duration-300"
+                >
+                  <button
+                    onClick={() => setExpandedChain(expandedChain === index ? null : index)}
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${chain.type === 'Mainnet' ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                      <div className="text-left">
+                        <div className="font-semibold text-purple-200">{chain.name}</div>
+                        <div className="text-xs text-purple-400">{chain.type}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right mr-2">
+                        <div className="text-sm font-bold text-purple-300">{chain.txCount.toLocaleString()}</div>
+                        <div className="text-xs text-purple-500">transactions</div>
+                      </div>
+                      {expandedChain === index ? (
+                        <ChevronUp className="w-5 h-5 text-purple-400" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-purple-400" />
+                      )}
+                    </div>
+                  </button>
+                  {expandedChain === index && (
+                    <div className="px-4 py-3 bg-white/5 border-t border-white/10 animate-fadeIn">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <div className="text-purple-400 text-xs mb-1">Contracts Deployed</div>
+                          <div className="text-purple-200 font-semibold">{chain.contracts}</div>
+                        </div>
+                        <div>
+                          <div className="text-purple-400 text-xs mb-1">Network Status</div>
+                          <div className="text-purple-200 font-semibold">{chain.type}</div>
+                        </div>
+                      </div>
+                      <a
+                        href={`${chain.explorer}/address/${address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 flex items-center gap-2 text-purple-300 hover:text-purple-200 text-sm transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        View on {chain.name} Explorer
+                      </a>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
         )}
 
         {profileData?.poaps && profileData.poaps.length > 0 && (
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20" id="poaps" data-animate>
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Award className="w-6 h-6 text-purple-400" />
               POAPs Collected ({profileData.poaps.length})
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {profileData.poaps.map((poap, index) => (
-                <div 
+                <div
                   key={`${poap.id}-${index}`}
-                  className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-purple-500/50 transition-all cursor-pointer group"
+                  onClick={() => setSelectedNFT({ ...poap, type: 'POAP' })}
+                  className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-purple-500/50 transition-all duration-300 cursor-pointer group hover:scale-105 hover:shadow-lg hover:shadow-purple-500/30"
                 >
                   {poap.image && poap.image !== '🏆' ? (
-                    <img 
-                      src={poap.image} 
+                    <img
+                      src={poap.image}
                       alt={poap.name}
-                      className="w-full aspect-square object-cover rounded-lg mb-2 group-hover:scale-105 transition-transform"
+                      className="w-full aspect-square object-cover rounded-lg mb-2 group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         e.target.onerror = null
                         e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ctext y="50" font-size="50"%3E🏆%3C/text%3E%3C/svg%3E'
@@ -632,22 +703,23 @@ Generated on: ${new Date().toLocaleString()}
         )}
 
         {profileData?.nfts && profileData.nfts.length > 0 && (
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20" id="nfts" data-animate>
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Code className="w-6 h-6 text-purple-400" />
               Notable NFTs
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {profileData.nfts.map((nft, index) => (
-                <div 
+                <div
                   key={`${nft.id}-${index}`}
-                  className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-pink-500/50 transition-all cursor-pointer"
+                  onClick={() => setSelectedNFT({ ...nft, type: 'NFT' })}
+                  className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-pink-500/50 transition-all duration-300 cursor-pointer group hover:scale-105 hover:shadow-lg hover:shadow-pink-500/30"
                 >
                   {nft.image ? (
-                    <img 
-                      src={nft.image} 
+                    <img
+                      src={nft.image}
                       alt={nft.name}
-                      className="w-full aspect-square object-cover rounded-lg mb-2"
+                      className="w-full aspect-square object-cover rounded-lg mb-2 group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         e.target.style.display = 'none'
                       }}
@@ -702,9 +774,85 @@ Generated on: ${new Date().toLocaleString()}
 
       <footer className="border-t border-white/10 bg-black/20 backdrop-blur-lg mt-12">
         <div className="max-w-6xl mx-auto px-4 py-6 text-center text-purple-300 text-sm">
-          Showcase your Web3 journey 
+          Showcase your Web3 journey
         </div>
       </footer>
+
+      {/* NFT Modal */}
+      {selectedNFT && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setSelectedNFT(null)}
+        >
+          <div
+            className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-2xl max-w-2xl w-full border border-white/20 shadow-2xl transform transition-all animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={`px-3 py-1 rounded-full text-sm font-semibold ${selectedNFT.type === 'POAP' ? 'bg-purple-500/20 text-purple-300' : 'bg-pink-500/20 text-pink-300'}`}>
+                    {selectedNFT.type}
+                  </div>
+                  <h3 className="text-2xl font-bold text-white">{selectedNFT.name}</h3>
+                </div>
+                <button
+                  onClick={() => setSelectedNFT(null)}
+                  className="text-purple-300 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="aspect-square rounded-xl overflow-hidden bg-white/5">
+                  {selectedNFT.image && selectedNFT.image !== '🏆' ? (
+                    <img
+                      src={selectedNFT.image}
+                      alt={selectedNFT.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-6xl">
+                      {selectedNFT.type === 'POAP' ? '🏆' : '🖼️'}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  {selectedNFT.collection && (
+                    <div>
+                      <div className="text-sm text-purple-400 mb-1">Collection</div>
+                      <div className="text-lg text-white font-semibold">{selectedNFT.collection}</div>
+                    </div>
+                  )}
+
+                  {selectedNFT.description && (
+                    <div>
+                      <div className="text-sm text-purple-400 mb-1">Description</div>
+                      <div className="text-white">{selectedNFT.description}</div>
+                    </div>
+                  )}
+
+                  {selectedNFT.id && (
+                    <div>
+                      <div className="text-sm text-purple-400 mb-1">Token ID</div>
+                      <div className="text-white font-mono">#{selectedNFT.id}</div>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-white/10">
+                    <div className="text-sm text-purple-400 mb-2">Type</div>
+                    <div className="text-white">
+                      {selectedNFT.type === 'POAP' ? 'Proof of Attendance Protocol' : 'Non-Fungible Token'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
